@@ -63,6 +63,7 @@ function submitScore() {
 <template>
   <ModalTemplate
     :is-visible="isVisible"
+    :show-action-buttons="true"
     @close="closeModal"
     @submit="submitScore"
     >
