@@ -81,7 +81,7 @@ function openAddScoreModal() {
 
 onMounted( () => {
   // Initialize the game with one player
-  addPlayer( 'Player 1' );
+  // addPlayer( 'Player 1' );
 } );
 </script>
 
