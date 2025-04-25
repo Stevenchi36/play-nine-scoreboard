@@ -1,11 +1,14 @@
 import { ref, reactive } from 'vue';
 import debounce from 'lodash.debounce';
+import { openDB } from '../utils/IDB';
+
+const DEBOUNCE_TIMEOUT = 2000; // 2s debounce delay
+const DB_STORE_NAME = 'players';
 
 interface PlayerScores {
   [playerName: string]: ( number | null )[];
 }
 
-const DEBOUNCE_TIMEOUT = 2000; // 2s debounce delay
 
 export function usePlayers() {
   const players = reactive<PlayerScores>( {} );
@@ -60,15 +63,63 @@ export function usePlayers() {
 
 
   function clearAllScores() {
-    console.log( 'Resetting all scores' );
     Object.keys( players ).forEach( ( player ) => {
       players[player] = Array( holes.value ).fill( null );
     } );
     debouncedSavePlayersToDB();
   }
-  // Debounced Save Function
-  const debouncedSavePlayersToDB = debounce( () => {
-    console.log( 'Saving players to DB:', players );
+
+  async function loadPlayerFromDB() {
+    try {
+      const db = await openDB(); // Wait for the database connection
+      const transaction = db.transaction( DB_STORE_NAME, 'readonly' );
+      const store = transaction.objectStore( DB_STORE_NAME );
+
+      // Retrieve all rows (should only be one)
+      const result = await new Promise<Record<string, ( number | null )[]>[]>( ( resolve, reject ) => {
+        const getRequest = store.getAll();
+
+        getRequest.onsuccess = () => {
+          resolve( getRequest.result );
+        };
+
+        getRequest.onerror = ( event ) => {
+          reject( event );
+        };
+      } );
+
+      if ( result.length > 0 ) {
+        if ( Object.keys( result[0] ).length > 0 ) {
+          holes.value = Object.values( result[0] )[0].length;
+        }
+        Object.assign( players, result[0] );
+      } else {
+        console.log( 'No players data found in the database.' );
+      }
+    } catch ( error ) {
+      console.error( 'Error loading players data:', error );
+    }
+  }
+
+  const debouncedSavePlayersToDB = debounce( async () => {
+    const db = await openDB();
+    const playersData = toRaw( players );
+
+    return new Promise( ( resolve, reject ) => {
+      const transaction = db.transaction( DB_STORE_NAME, 'readwrite' );
+      const store = transaction.objectStore( DB_STORE_NAME );
+
+      // Add key 1 to make sure we ever only have one entry
+      const addRequest = store.put( playersData, 1 );
+
+      addRequest.onsuccess = () => {
+          resolve( undefined );
+        };
+
+      addRequest.onerror = ( event ) => {
+        reject( event );
+      };
+    } );
   }, DEBOUNCE_TIMEOUT );
 
   return {
@@ -80,5 +131,6 @@ export function usePlayers() {
     addHole,
     removeHole,
     clearAllScores,
+    loadPlayerFromDB,
   };
 }

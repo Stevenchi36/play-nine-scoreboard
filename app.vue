@@ -8,6 +8,7 @@ const {
   removeHole,
   updatePlayerScore,
   clearAllScores,
+  loadPlayerFromDB,
 } = usePlayers();
 const cards = reactive<[number | null, number | null][]>( [
   [null, null],
@@ -80,10 +81,10 @@ function openAddScoreModal() {
   isModalVisible.value = true;
 }
 
-// onMounted( () => {
-//   // Initialize the game with one player
-//   addPlayer( 'Player 1' );
-// } );
+onMounted( async () => {
+  // Initialize the game with one player
+  loadPlayerFromDB();
+} );
 </script>
 
 <template>
