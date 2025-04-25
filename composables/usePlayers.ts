@@ -58,6 +58,14 @@ export function usePlayers() {
     }
   }
 
+
+  function clearAllScores() {
+    console.log( 'Resetting all scores' );
+    Object.keys( players ).forEach( ( player ) => {
+      players[player] = Array( holes.value ).fill( null );
+    } );
+    debouncedSavePlayersToDB();
+  }
   // Debounced Save Function
   const debouncedSavePlayersToDB = debounce( () => {
     console.log( 'Saving players to DB:', players );
@@ -71,5 +79,6 @@ export function usePlayers() {
     removePlayer,
     addHole,
     removeHole,
+    clearAllScores,
   };
 }

@@ -7,6 +7,7 @@ const {
   addHole,
   removeHole,
   updatePlayerScore,
+  clearAllScores,
 } = usePlayers();
 const cards = reactive<[number | null, number | null][]>( [
   [null, null],
@@ -79,10 +80,10 @@ function openAddScoreModal() {
   isModalVisible.value = true;
 }
 
-onMounted( () => {
-  // Initialize the game with one player
-  // addPlayer( 'Player 1' );
-} );
+// onMounted( () => {
+//   // Initialize the game with one player
+//   addPlayer( 'Player 1' );
+// } );
 </script>
 
 <template>
@@ -117,6 +118,7 @@ onMounted( () => {
       @remove-player="removePlayer"
       @add-hole="addHole"
       @remove-hole="removeHole"
+      @clear-scores="clearAllScores"
       />
     <AddScoreToPlayerModal
       v-if="isModalVisible"

@@ -11,7 +11,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   ( event: 'update:score', player: string, holeNumber: number, value: number ): void;
   ( event: 'add-player' | 'remove-player', playerName: string ): void;
-  ( event: 'add-hole' | 'remove-hole' ): void;
+  ( event: 'add-hole' | 'remove-hole' | 'clear-scores' ): void;
 }>();
 
 // Reactive State
@@ -86,8 +86,10 @@ function getPlayerRankClass( player: string ) {
   return '';
 }
 
-function getPlayerRowClass( player: string, scores: ( number | null )[] ) {
-  const allHolesPlayed = scores.every( ( score ) => score !== null );
+function getPlayerRowClass( player: string ) {
+  const allHolesPlayed = Object.values( props.players ).every(
+    ( playerScores ) => playerScores.every( ( score ) => score !== null ),
+  );
   if ( !allHolesPlayed ) {
     return '';
   }
@@ -95,7 +97,7 @@ function getPlayerRowClass( player: string, scores: ( number | null )[] ) {
 }
 
 function emitAddPlayer() {
-  const playerName = prompt( 'Enter the new player\'s name:' );
+  const playerName = prompt( 'Enter the new player\'s name (separate multiple players with a comma):' );
   if ( playerName ) {
     emit( 'add-player', playerName );
   }
@@ -113,13 +115,29 @@ function emitAddHole() {
 }
 
 function emitRemoveHole() {
+  if ( props.holes <= 0 ) {
+    alert( 'You must have at least one hole.' );
+    return;
+  }
+  if ( Object.values( props.players ).some( ( scores ) => scores[props.holes - 1] !== null ) ) {
+    if ( !confirm( 'There is at least one score on this hole. Are you sure you want to remove it?' ) ) {
+      return;
+    }
+  }
+
   emit( 'remove-hole' );
+}
+
+function clearScores() {
+  if ( !confirm( 'Are you sure you want to clear all scores?' ) ) {
+    return;
+  }
+  emit( 'clear-scores' );
 }
 </script>
 
 <template>
   <div class="scoreboard">
-    <h1>Scoreboard</h1>
     <div class="controls">
       <label>
         <input
@@ -128,11 +146,6 @@ function emitRemoveHole() {
           >
         Lock previous holes
       </label>
-      <div class="buttons">
-        <button @click="emitAddPlayer">Add Player</button>
-        <button @click="emitAddHole">Add Hole</button>
-        <button @click="emitRemoveHole">Remove Hole</button>
-      </div>
     </div>
     <div class="table-container">
       <table>
@@ -152,7 +165,7 @@ function emitRemoveHole() {
           <tr
             v-for="(scores, player) in players"
             :key="player"
-            :class="getPlayerRowClass(player, scores)"
+            :class="getPlayerRowClass(player)"
             >
             <td
               :class="getPlayerRankClass(player)"
@@ -181,6 +194,19 @@ function emitRemoveHole() {
         </tbody>
       </table>
     </div>
+    <div class="buttons">
+      <button @click="emitAddPlayer">Add Player</button>
+      <button
+        class="danger"
+        @click="clearScores">
+        Clear All
+      </button>
+    </div>
+    <div class="buttons">
+      <span>Holes:</span>
+      <button @click="emitRemoveHole">-</button>
+      <button @click="emitAddHole">+</button>
+    </div>
   </div>
 </template>
 
@@ -199,18 +225,25 @@ function emitRemoveHole() {
 }
 
 .buttons button {
-  margin-right: 10px;
+  margin-left: 3px;
+  margin-right: 3px;
   padding: 5px 10px;
   font-size: 14px;
   cursor: pointer;
+
+  &:first-child {
+    margin-left: 0;
+  }
 }
 
 .player-name {
   position: relative;
+  padding-left: 1.5rem;
+  white-space: nowrap;
 }
 
 .delete-button {
-  display:flex;
+  display:inline-flex;
   align-items: center;
   justify-content: center;
   background-color: #ff4d4d;
@@ -219,8 +252,7 @@ function emitRemoveHole() {
   border-radius: 100%;
   cursor: pointer;
   position: absolute;
-  top: 0;
-  left: -6px;
+  left: 0px;
   width: 16px;
   height: 16px;
   font-size: 8px;
@@ -279,20 +311,19 @@ th:last-child {
 }
 
 /* Rank-specific styles */
-.gold {
+.gold, tr.gold td {
   background-color: gold !important;
   color: black;
   font-weight: bold;
-  
 }
 
-.silver {
+.silver, tr.silver td {
   background-color: silver !important;
   color: black;
   font-weight: bold;
 }
 
-.bronze {
+.bronze, tr.bronze td {
   background-color: #cd7f32 !important;
   color: black;
   font-weight: bold;
