@@ -161,7 +161,7 @@ function emitRemoveHole() {
                 class="delete-button"
                 @click="emitRemovePlayer(player)"
                 >
-                -
+                &times;
               </button>
               {{ player }}
             </td>
@@ -210,16 +210,21 @@ function emitRemoveHole() {
 }
 
 .delete-button {
+  display:flex;
+  align-items: center;
+  justify-content: center;
   background-color: #ff4d4d;
   color: white;
   border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
+  border-radius: 100%;
   cursor: pointer;
   position: absolute;
-  right: 100%;
-  /* transform: translate( 50%, -50% ); */
-  font-size: 12px;
+  top: 0;
+  left: -6px;
+  width: 16px;
+  height: 16px;
+  font-size: 8px;
+  padding: 0
 }
 
 .delete-button:hover {
